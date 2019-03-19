@@ -1,0 +1,42 @@
+server:
+    port: 8080
+---
+spring:
+    profiles: default
+    datasource:
+          url: 'jdbc:h2:~/test/back_qa'
+          driver-class-name: 'org.h2.Driver'
+          username: 'sa'
+          password: ''
+          test-on-borrow: true
+          validation-query: 'SELECT 1'
+          log-validation-errors: true
+          max-active: 20
+          initial-size: 4
+          autoReconnect: true
+          autoReconnectForPools: true
+          is-connection-validation-required: true
+hibernate:
+  hbm2ddlAuto: 'create'
+  showSql: true
+---
+spring:
+    profiles: production
+    jpa:
+          daqtabase-platform: org.hibernate.dialect.PostgreSQL94Dialect
+    datasource:
+#          url: 'jdbc:postgresql://localhost:5432/tu_esquema'
+          driver-class-name: 'org.postgresql.Driver'
+          username: 'root'
+          password: 'root'
+          test-on-borrow: true
+          validation-query: 'SELECT 1'
+          log-validation-errors: true
+          max-active: 20
+          initial-size: 4
+          autoReconnect: true
+          autoReconnectForPools: true
+          is-connection-validation-required: true
+hibernate:
+  hbm2ddlAuto: 'create'
+  showSql: true
