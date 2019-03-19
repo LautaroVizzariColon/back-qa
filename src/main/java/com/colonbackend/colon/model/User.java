@@ -6,12 +6,26 @@ import javax.persistence.*;
 @Table(name = "users")
 public class User {
 
-    private Long id;
-    private String nombre;
-    private String apellido;
+    public User() {
+    }
+
+    public User(String nombre, String apellido) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+    }
+
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
+    private Long id;
+
+    @Column(name ="nombre")
+    private String nombre;
+
+    @Column(name ="apellido")
+    private String apellido;
+
+
     public Long getId() {
         return id;
     }

@@ -1,17 +1,15 @@
 package com.colonbackend.colon.controllers;
 
-import com.colonbackend.colon.model.UserDTO;
 import com.colonbackend.colon.model.User;
-import com.colonbackend.colon.model.status.*;
+import com.colonbackend.colon.model.UserDTO;
 import com.colonbackend.colon.repository.PersonaRepository;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpServerErrorException;
 
+
+import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +36,9 @@ public class PersonaControllers {
 
 
     @GetMapping("ezequiel")
-    public ResponseEntity<User> get200Eze(){
-        UserDTO u = new UserDTO();
-        u.setNombre("ezequiel");
-        u.setApellido("hermoso");
-        return customUserResponse(u,HttpStatus.OK);
+    public ResponseEntity<List<User>> get200Eze(){
+
+        return getUserResponseByFullName(new UserDTO("ezequiel","hermoso"));
     }
 
 
@@ -62,12 +58,12 @@ public class PersonaControllers {
     @GetMapping("error/401/ezequiel")
 
     public ResponseEntity<String> status401(){
-        return customResponse("Error acceso noreturn new ResponseEntity<e404>(u,HttpStatus.NOT_FOUND); autorizado", HttpStatus.UNAUTHORIZED);
+        return customResponse("Error acceso no autorizado", HttpStatus.UNAUTHORIZED);
     }
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody UserDTO userDTO){
-        return customUserResponse(userDTO,HttpStatus.OK);
+        return customUserResponseIns(userDTO,HttpStatus.OK);
     }
 
     @PostMapping(value = "error/500")
@@ -84,11 +80,36 @@ public class PersonaControllers {
     }
 
    
-    @PutMapping("/ezequiel")
-        ResponseEntity<String> status200(@RequestBody UserDTO userDTO){
-        userDTO.setNombre("ezequiel");
-        return customUserResponse(userDTO,HttpStatus.OK);
+    @PutMapping("/{nombre}")
+        ResponseEntity<User> status200(@PathVariable ("nombre") String nombre, @RequestBody UserDTO userDTO){
+
+
+        return customUpdate(nombre, userDTO,HttpStatus.OK);
         }
+
+    @Transactional
+    private ResponseEntity<User> customUpdate(String nombre, UserDTO userDTO, HttpStatus httpStatus){
+
+        List<User> users = personaRepository.findAllByNombre(nombre);
+        Boolean nombreParam = false;
+        Boolean apellidoParam = false;
+
+        if(userDTO.getNombre() != null && !userDTO.getNombre().isEmpty())
+            nombreParam = true;
+
+        if(userDTO.getApellido() != null && !userDTO.getApellido().isEmpty())
+            apellidoParam = true;
+
+        for(User user: users){
+            if(nombreParam)
+                user.setNombre(userDTO.getNombre());
+            if(apellidoParam)
+                user.setApellido(userDTO.getApellido());
+        }
+
+        return new ResponseEntity(users,httpStatus);
+    }
+
 
     @PutMapping("/error/500/ezequiel")
         ResponseEntity<String> error500Eze(@RequestBody UserDTO userDTO){
@@ -106,29 +127,29 @@ public class PersonaControllers {
     }
 
 
+    private ResponseEntity customResponse(String content, HttpStatus status){
+        Map mapa = new HashMap<String, String>();
+        mapa.put("content", content);
+        return new ResponseEntity(mapa, status);
+    }
+
+    private ResponseEntity<User> customUserResponseIns(UserDTO userDTO, HttpStatus status ){
+        User user = new User(userDTO.getNombre(),userDTO.getApellido());
+        personaRepository.save(user);
+        return new ResponseEntity<>(user, status);
+    }
+
+    private ResponseEntity<List> getUserResponseByNombre(@RequestBody UserDTO userDTO){
+
+        return new ResponseEntity(personaRepository.findAllByApellido(userDTO.getApellido()),HttpStatus.OK);
+    }
 
 
 
+    private ResponseEntity<List<User>> getUserResponseByFullName(@RequestBody UserDTO userDTO){
+        return new ResponseEntity(personaRepository.findAllByNombreAndApellido(userDTO.getNombre(),userDTO.getApellido()),HttpStatus.OK);
+    }
 
-
-        private ResponseEntity customResponse(String content, HttpStatus status){
-            Map mapa = new HashMap<String, String>();
-            mapa.put("content", content);
-            return new ResponseEntity(mapa, status);
-        }
-
-
-        private ResponseEntity customUserResponse(UserDTO userDTO, HttpStatus status ){
-        try {
-            User usuario = new User();
-            usuario.setNombre(userDTO.getNombre());
-            usuario.setApellido(userDTO.getApellido());
-            personaRepository.save(usuario);
-            return new ResponseEntity<>(usuario, status);
-        }catch(Exception e){
-            return new ResponseEntity<String>(e.toString(),HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        }
 }
 
 
